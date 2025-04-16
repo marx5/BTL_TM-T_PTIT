@@ -10,9 +10,9 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
 
-    // Chỉ giữ lại một useEffect để kiểm tra token
     useEffect(() => {
         const checkToken = async () => {
             try {
@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
 
                 if (!token || !storedUser) {
                     setUser(null);
+                    setIsAuthenticated(false);
                     setLoading(false);
                     return;
                 }
@@ -35,38 +36,40 @@ export const AuthProvider = ({ children }) => {
 
                     if (response.data) {
                         setUser(response.data);
+                        setIsAuthenticated(true);
                         localStorage.setItem('user', JSON.stringify(response.data));
                     } else {
                         // Nếu không có data, xóa token và user
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
                         setUser(null);
+                        setIsAuthenticated(false);
                     }
                 } catch (error) {
-                    console.error('Error fetching user data:', error);
-
-                    // Nếu lỗi 401 hoặc 500, xóa token và user
-                    if (error.response?.status === 401 || error.response?.status === 500) {
+                    // Nếu có lỗi 401, xóa token và user
+                    if (error.response?.status === 401) {
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
                         setUser(null);
+                        setIsAuthenticated(false);
                     } else {
                         // Nếu lỗi khác, sử dụng thông tin đã lưu
                         try {
                             const parsedUser = JSON.parse(storedUser);
                             setUser(parsedUser);
+                            setIsAuthenticated(true);
                         } catch (parseError) {
                             console.error('Error parsing stored user:', parseError);
                             localStorage.removeItem('user');
                             setUser(null);
+                            setIsAuthenticated(false);
                         }
                     }
                 }
             } catch (error) {
-                console.error('Token check error:', error);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
+                console.error('Error checking token:', error);
                 setUser(null);
+                setIsAuthenticated(false);
             } finally {
                 setLoading(false);
             }
@@ -78,16 +81,13 @@ export const AuthProvider = ({ children }) => {
     const loginUser = async (email, password) => {
         try {
             const response = await login(email, password);
-            const { token, user } = response.data;
-
+            const { token, user } = response;
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
             setUser(user);
-            toast.success('Đăng nhập thành công');
-            return user;
+            setIsAuthenticated(true);
+            return response;
         } catch (error) {
-            console.error('Login error:', error);
-            toast.error(error.response?.data?.message || 'Đăng nhập thất bại');
             throw error;
         }
     };
@@ -95,61 +95,52 @@ export const AuthProvider = ({ children }) => {
     const registerUser = async (userData) => {
         try {
             const response = await register(userData);
-            const { token, user } = response.data;
-
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
-            setUser(user);
-            toast.success('Đăng ký thành công');
-            return user;
+            return response;
         } catch (error) {
-            console.error('Register error:', error);
-            toast.error(error.response?.data?.message || 'Đăng ký thất bại');
             throw error;
         }
     };
 
-    const logout = async () => {
-        try {
-            localStorage.clear();
-            setUser(null);
-            setLoading(false);
-            navigate('/');
-            toast.success('Đăng xuất thành công');
-        } catch (error) {
-            console.error('Logout error:', error);
-            toast.error('Có lỗi xảy ra khi đăng xuất');
-        }
+    const logoutUser = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        setIsAuthenticated(false);
     };
 
-    const handleUpdateProfile = async (data) => {
+    const updateUserProfile = async (userData) => {
         try {
-            const updatedUser = await updateProfile(data);
-            setUser(updatedUser);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            toast.success('Cập nhật thông tin thành công');
-            return updatedUser;
+            const response = await updateProfile(userData);
+            setUser(response);
+            localStorage.setItem('user', JSON.stringify(response));
+            return response;
         } catch (error) {
-            console.error('Update profile error:', error);
-            toast.error(error.response?.data?.message || 'Cập nhật thông tin thất bại');
             throw error;
         }
     };
 
-    const authValue = useMemo(
-        () => ({
-            user,
-            loading,
-            token: localStorage.getItem('token'),
-            loginUser,
-            registerUser,
-            logout,
-            updateProfile: handleUpdateProfile,
-        }),
-        [user, loading]
+    const value = useMemo(() => ({
+        user,
+        loading,
+        isAuthenticated,
+        token: localStorage.getItem('token'),
+        login: loginUser,
+        register: registerUser,
+        logout: logoutUser,
+        updateProfile: updateUserProfile,
+    }), [user, loading, isAuthenticated]);
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
     );
-
-    return <AuthContext.Provider value={authValue}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

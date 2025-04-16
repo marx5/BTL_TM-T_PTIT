@@ -1,21 +1,38 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { getCart } from '../services/cart';
+import { getCart, addToCart as addToCartService, updateCartItem as updateCartItemService, deleteCartItem as deleteCartItemService, updateCartItemSelected as updateCartItemSelectedService } from '../services/cart';
 import { useAuth } from './AuthContext';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const CartContext = createContext();
 
+// Helper function to format cart data
+const formatCartData = (cartData) => {
+  if (!cartData) return null;
+
+  return {
+    ...cartData,
+    shippingFee: cartData.shippingFee || 0,
+    items: (cartData.items || []).map(item => ({
+      ...item,
+      size: item.ProductVariant?.size || '',
+      color: item.ProductVariant?.color || '',
+      product: {
+        ...item.product,
+        image: item.product.image ? `http://localhost:3456/uploads/${item.product.image.replace(/^\/+/, '').replace(/^Uploads\//, '')}` : null
+      }
+    }))
+  };
+};
+
 export const CartProvider = ({ children }) => {
-  const { user, loading: authLoading } = useAuth();
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { token, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const fetchCart = useCallback(async () => {
-    if (authLoading) return; // Đợi cho đến khi auth loading xong
-
-    if (!user) {
+    if (!token) {
       setCart(null);
       setLoading(false);
       return;
@@ -24,34 +41,150 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await getCart();
-      setCart(response);
-    } catch (err) {
-      console.error('Error fetching cart:', err);
-      if (err.message === 'Vui lòng đăng nhập để xem giỏ hàng') {
-        setCart(null);
-        navigate('/login');
-        toast.error('Vui lòng đăng nhập để xem giỏ hàng');
-      } else if (err.response?.status === 401) {
-        setCart(null);
+      setCart(formatCartData(response));
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      if (error.response?.status === 401) {
         navigate('/login');
         toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
       } else {
         toast.error('Không thể tải giỏ hàng. Vui lòng thử lại sau.');
-        setCart(null);
       }
     } finally {
       setLoading(false);
     }
-  }, [user, authLoading, navigate]);
+  }, [token, navigate]);
+
+  const addToCart = useCallback(async (variantId, quantity = 1) => {
+    try {
+      const response = await addToCartService(variantId, quantity);
+      setCart(prev => ({
+        ...prev,
+        items: [...(prev?.items || []), response.cartItem]
+      }));
+      toast.success('Đã thêm sản phẩm vào giỏ hàng');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else if (error.response?.data?.error === 'stock_exceeded') {
+        toast.error('Số lượng sản phẩm vượt quá tồn kho');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại sau.');
+      }
+    }
+  }, [navigate]);
+
+  const updateCartItem = useCallback(async (itemId, quantity) => {
+    try {
+      const response = await updateCartItemService(itemId, { quantity });
+      setCart(prev => ({
+        ...prev,
+        total: response.total,
+        shippingFee: response.shippingFee,
+        items: prev.items.map(item =>
+          item.id === itemId ? {
+            ...item,
+            quantity,
+            product: {
+              ...item.product,
+              price: response.cartItem.product.price
+            },
+            ProductVariant: {
+              ...item.ProductVariant,
+              Product: {
+                ...item.ProductVariant.Product,
+                price: response.cartItem.ProductVariant.Product.price
+              }
+            }
+          } : item
+        )
+      }));
+    } catch (error) {
+      console.error('Error updating cart item:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else if (error.response?.status === 404) {
+        toast.error('Sản phẩm không tồn tại trong giỏ hàng');
+        await fetchCart();
+      } else if (error.response?.data?.error === 'stock_exceeded') {
+        toast.error('Số lượng sản phẩm vượt quá tồn kho');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể cập nhật số lượng. Vui lòng thử lại sau.');
+      }
+    }
+  }, [navigate, fetchCart]);
+
+  const deleteCartItem = useCallback(async (id) => {
+    try {
+      console.log('Deleting cart item in context:', id);
+      const updatedCart = await deleteCartItemService(id);
+      console.log('Updated cart after deletion:', updatedCart);
+
+      if (!updatedCart) {
+        throw new Error('Không nhận được phản hồi từ server');
+      }
+
+      setCart(formatCartData(updatedCart));
+      toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
+    } catch (error) {
+      console.error('Error deleting cart item in context:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else if (error.response?.status === 404) {
+        toast.error('Sản phẩm không tồn tại trong giỏ hàng');
+        await fetchCart();
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể xóa sản phẩm. Vui lòng thử lại sau.');
+      }
+    }
+  }, [navigate, fetchCart]);
+
+  const updateCartItemSelected = useCallback(async (itemId, selected) => {
+    try {
+      const response = await updateCartItemSelectedService(itemId, selected);
+      if (response) {
+        setCart(prev => ({
+          ...prev,
+          total: response.total,
+          shippingFee: response.shippingFee,
+          items: prev.items.map(item =>
+            item.id === itemId ? { ...item, selected } : item
+          )
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating cart item selected status:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else if (error.response?.status === 404) {
+        toast.error('Sản phẩm không tồn tại trong giỏ hàng');
+        await fetchCart();
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể cập nhật trạng thái chọn. Vui lòng thử lại sau.');
+      }
+    }
+  }, [navigate, fetchCart]);
 
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
+  const selectedItems = cart?.items?.filter(item => item.selected) || [];
+
   const value = {
     cart,
     loading: loading || authLoading,
+    selectedItems,
     fetchCart,
+    addToCart,
+    updateCartItem,
+    deleteCartItem,
+    updateCartItemSelected,
   };
 
   return (

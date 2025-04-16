@@ -92,17 +92,39 @@ exports.getCart = async (req, res, next) => {
 
     await transaction.commit();
 
+    // Tính tổng tiền chỉ cho các sản phẩm được chọn
+    const total = cartItems.reduce(
+      (sum, item) => sum + (item.selected ? item.ProductVariant.Product.price * item.quantity : 0),
+      0
+    );
+
+    // Tính phí ship (free ship khi tổng tiền >= 1,000,000đ)
+    const shippingFee = total < 1000000 ? 30000 : 0;
+
     res.json({
       id: cart.id,
+      total,
+      shippingFee,
       items: cartItems.map(item => ({
         id: item.id,
         variantId: item.ProductVariantId,
         quantity: item.quantity,
+        selected: item.selected,
         product: {
           id: item.ProductVariant.Product.id,
           name: item.ProductVariant.Product.name,
           price: item.ProductVariant.Product.price,
-          image: item.ProductVariant.Product.ProductImages[0]?.url
+          image: item.ProductVariant.Product.ProductImages?.[0]?.url || null
+        },
+        ProductVariant: {
+          id: item.ProductVariant.id,
+          size: item.ProductVariant.size,
+          color: item.ProductVariant.color,
+          Product: {
+            id: item.ProductVariant.Product.id,
+            name: item.ProductVariant.Product.name,
+            price: item.ProductVariant.Product.price
+          }
         }
       }))
     });
@@ -147,7 +169,8 @@ exports.addToCart = async (req, res, next) => {
       cartItem = await CartItem.create({
         CartId: cart.id,
         ProductVariantId: variantId,
-        quantity
+        quantity,
+        selected: false
       }, { transaction });
     }
 
@@ -180,6 +203,13 @@ exports.updateCartItem = async (req, res, next) => {
         {
           model: ProductVariant,
           as: 'ProductVariant',
+          include: [
+            {
+              model: Product,
+              as: 'Product',
+              attributes: ['id', 'name', 'price'],
+            },
+          ],
           transaction
         }
       ],
@@ -197,11 +227,65 @@ exports.updateCartItem = async (req, res, next) => {
     cartItem.quantity = quantity;
     await cartItem.save({ transaction });
 
+    // Lấy lại toàn bộ giỏ hàng để tính tổng
+    const cart = await Cart.findOne({
+      where: { id: cartItem.CartId },
+      include: [
+        {
+          model: CartItem,
+          include: [
+            {
+              model: ProductVariant,
+              as: 'ProductVariant',
+              include: [
+                {
+                  model: Product,
+                  as: 'Product',
+                  attributes: ['id', 'name', 'price'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      transaction
+    });
+
+    // Tính tổng tiền
+    const total = cart.CartItems.reduce(
+      (sum, item) => sum + item.ProductVariant.Product.price * item.quantity,
+      0
+    );
+
+    // Tính phí ship
+    const shippingFee = total < 1000000 ? 30000 : 0;
+
     await transaction.commit();
 
     res.json({
       message: 'Cập nhật giỏ hàng thành công',
-      cartItem
+      total,
+      shippingFee,
+      cartItem: {
+        id: cartItem.id,
+        variantId: cartItem.ProductVariantId,
+        quantity: cartItem.quantity,
+        product: {
+          id: cartItem.ProductVariant.Product.id,
+          name: cartItem.ProductVariant.Product.name,
+          price: cartItem.ProductVariant.Product.price,
+        },
+        ProductVariant: {
+          id: cartItem.ProductVariant.id,
+          size: cartItem.ProductVariant.size,
+          color: cartItem.ProductVariant.color,
+          Product: {
+            id: cartItem.ProductVariant.Product.id,
+            name: cartItem.ProductVariant.Product.name,
+            price: cartItem.ProductVariant.Product.price
+          }
+        }
+      }
     });
   } catch (err) {
     await transaction.rollback();
@@ -271,7 +355,6 @@ exports.selectCartItems = async (req, res, next) => {
     await transaction.commit();
 
     res.json({
-      message: 'Cập nhật trạng thái chọn sản phẩm thành công.',
     });
   } catch (err) {
     await transaction.rollback();
@@ -348,6 +431,145 @@ exports.getUserCart = async (req, res, next) => {
 
     res.json(formattedCart);
   } catch (err) {
+    next(err);
+  }
+};
+
+// Update cart item selected status
+exports.updateCartItemSelected = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const { id } = req.params;
+    const { selected } = req.body;
+
+    console.log('Updating cart item selected status:', { id, selected });
+
+    // Tìm cart item và cập nhật trạng thái chọn
+    const cartItem = await CartItem.findByPk(id, {
+      include: [
+        {
+          model: ProductVariant,
+          as: 'ProductVariant',
+          include: [
+            {
+              model: Product,
+              as: 'Product',
+              attributes: ['id', 'name', 'price'],
+              include: [
+                {
+                  model: ProductImage,
+                  as: 'ProductImages',
+                  attributes: ['id', 'url'],
+                  limit: 1,
+                  required: false,
+                },
+              ],
+            },
+          ],
+          transaction
+        }
+      ],
+      transaction
+    });
+
+    if (!cartItem) {
+      throw new AppError('cart_item_not_found', 404);
+    }
+
+    // Cập nhật trạng thái chọn
+    cartItem.selected = selected;
+    await cartItem.save({ transaction });
+
+    // Lấy lại toàn bộ giỏ hàng để tính tổng
+    const cart = await Cart.findOne({
+      where: { id: cartItem.CartId },
+      include: [
+        {
+          model: CartItem,
+          include: [
+            {
+              model: ProductVariant,
+              as: 'ProductVariant',
+              include: [
+                {
+                  model: Product,
+                  as: 'Product',
+                  attributes: ['id', 'name', 'price'],
+                  include: [
+                    {
+                      model: ProductImage,
+                      as: 'ProductImages',
+                      attributes: ['id', 'url'],
+                      limit: 1,
+                      required: false,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      transaction
+    });
+
+    // Log để debug
+    console.log('Cart items after update:', cart.CartItems.map(item => ({
+      id: item.id,
+      selected: item.selected,
+      price: item.ProductVariant.Product.price,
+      quantity: item.quantity
+    })));
+
+    // Tính tổng tiền chỉ cho các sản phẩm được chọn
+    const total = cart.CartItems.reduce(
+      (sum, item) => {
+        const itemTotal = item.selected ? item.ProductVariant.Product.price * item.quantity : 0;
+        console.log(`Item ${item.id}: selected=${item.selected}, price=${item.ProductVariant.Product.price}, quantity=${item.quantity}, total=${itemTotal}`);
+        return sum + itemTotal;
+      },
+      0
+    );
+
+    console.log('Final total:', total);
+
+    // Tính phí ship
+    const shippingFee = total < 1000000 ? 30000 : 0;
+
+    await transaction.commit();
+
+    // Format lại response để phù hợp với FE
+    const formattedResponse = {
+      id: cart.id,
+      total,
+      shippingFee,
+      items: cart.CartItems.map(item => ({
+        id: item.id,
+        variantId: item.ProductVariantId,
+        quantity: item.quantity,
+        selected: item.selected,
+        product: {
+          id: item.ProductVariant.Product.id,
+          name: item.ProductVariant.Product.name,
+          price: item.ProductVariant.Product.price,
+          image: item.ProductVariant.Product.ProductImages?.[0]?.url || null
+        },
+        ProductVariant: {
+          id: item.ProductVariant.id,
+          size: item.ProductVariant.size,
+          color: item.ProductVariant.color,
+          Product: {
+            id: item.ProductVariant.Product.id,
+            name: item.ProductVariant.Product.name,
+            price: item.ProductVariant.Product.price
+          }
+        }
+      }))
+    };
+
+    res.json(formattedResponse);
+  } catch (err) {
+    await transaction.rollback();
     next(err);
   }
 };

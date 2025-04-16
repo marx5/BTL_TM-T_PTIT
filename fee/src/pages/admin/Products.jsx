@@ -147,9 +147,9 @@ const Products = () => {
     };
 
     const handleRemoveVariant = async (variantId) => {
-        if (isEditMode && variantId) {
+        if (isEditMode && variantId && selectedProduct?.id) {
             try {
-                await deleteProductVariant(variantId, token);
+                await deleteProductVariant(selectedProduct.id, variantId);
                 toast.success('Xóa biến thể thành công!');
             } catch (err) {
                 console.error('Error deleting variant:', err);

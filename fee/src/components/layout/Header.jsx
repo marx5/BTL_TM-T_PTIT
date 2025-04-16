@@ -37,7 +37,7 @@ const Header = () => {
     <header className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/">
-          <img src="/assets/images/logo.png" alt="Logo" className="h-10" />
+          <img src="https://photos.app.goo.gl/9weJCuxNP4yciYBi6" alt="Logo" className="h-10" />
         </Link>
         <form onSubmit={handleSearch} className="flex-1 mx-6">
           <input

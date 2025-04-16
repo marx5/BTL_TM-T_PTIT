@@ -91,7 +91,7 @@ exports.sendVerificationEmail = async (to, verificationLink) => {
       <body>
         <div class="container">
           <div class="header">
-            <img src="http://localhost:3000/assets/images/logo.png" alt="Fashion Store Logo">
+            <img src="https://photos.app.goo.gl/9weJCuxNP4yciYBi6" alt="Fashion Store Logo">
           </div>
           <div class="content">
             <h2>Xác minh email của bạn</h2>
@@ -194,7 +194,7 @@ exports.sendResetPasswordEmail = async (to, resetLink) => {
       <body>
         <div class="container">
           <div class="header">
-            <img src="http://localhost:3000/assets/images/logo.png" alt="Fashion Store Logo">
+            <img src="https://photos.app.goo.gl/9weJCuxNP4yciYBi6" alt="Fashion Store Logo">
           </div>
           <div class="content">
             <h2>Đặt lại mật khẩu</h2>
@@ -296,7 +296,7 @@ exports.sendOrderConfirmationEmail = async (to, orderId, total, shippingFee) => 
       <body>
         <div class="container">
           <div class="header">
-            <img src="http://localhost:3000/assets/images/logo.png" alt="Fashion Store Logo">
+            <img src="https://photos.app.goo.gl/9weJCuxNP4yciYBi6" alt="Fashion Store Logo">
           </div>
           <div class="content">
             <h2>Xác nhận đơn hàng của bạn</h2>

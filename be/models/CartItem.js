@@ -28,10 +28,14 @@ const CartItem = sequelize.define('CartItem', {
     allowNull: false,
     defaultValue: 1,
   },
-  isSelected: {
+  selected: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true,
+    allowNull: false,
+    defaultValue: false,
   },
+}, {
+  tableName: 'CartItems',
+  timestamps: true,
 });
 
 CartItem.associate = (models) => {
