@@ -1,14 +1,11 @@
 import api from './api';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3456/api';
 
 // Lấy giỏ hàng của user hiện tại
 export const getCart = async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('Vui lòng đăng nhập để xem giỏ hàng');
-  }
-  const response = await api.get('/cart', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await api.get('/cart');
   return response.data;
 };
 
@@ -37,36 +34,31 @@ export const getUserCart = async () => {
 
 // Thêm sản phẩm vào giỏ hàng
 export const addToCart = async (variantId, quantity = 1) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
-  }
-  const response = await api.post('/cart', { variantId, quantity }, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await api.post('/cart', { variantId, quantity });
   return response.data;
 };
 
 // Cập nhật số lượng sản phẩm trong giỏ hàng
-export const updateCartItem = async (id, quantity) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('Vui lòng đăng nhập để cập nhật giỏ hàng');
+export const updateCartItem = async (itemId, data) => {
+  try {
+    const response = await api.put(`/cart/${itemId}`, data);
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      // Server trả về lỗi
+      throw error;
+    } else if (error.request) {
+      // Không nhận được response từ server
+      throw new Error('Không thể kết nối đến server. Vui lòng thử lại sau.');
+    } else {
+      // Lỗi khi thiết lập request
+      throw new Error('Có lỗi xảy ra. Vui lòng thử lại sau.');
+    }
   }
-  const response = await api.put(`/cart/${id}`, { quantity }, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
 };
 
 // Xóa sản phẩm khỏi giỏ hàng
-export const deleteCartItem = async (id) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('Vui lòng đăng nhập để xóa sản phẩm khỏi giỏ hàng');
-  }
-  const response = await api.delete(`/cart/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const deleteCartItem = async (itemId) => {
+  const response = await api.delete(`/cart/items/${itemId}`);
   return response.data;
 };

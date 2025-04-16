@@ -1,14 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { updateCartItem, deleteCartItem } from '../services/cart';
+import { deleteCartItem } from '../services/cart';
 import { toast } from 'react-hot-toast';
 import CartItem from '../components/cart/CartItem';
 import CartSummary from '../components/cart/CartSummary';
 
 const Cart = () => {
     const navigate = useNavigate();
-    const { cart, loading, fetchCart } = useCart();
+    const { cart, loading, updateCartItem, fetchCart } = useCart();
 
     const handleUpdateQuantity = async (productId, quantity) => {
         try {
@@ -18,11 +18,8 @@ const Cart = () => {
             }
 
             await updateCartItem(productId, quantity);
-            await fetchCart();
-            toast.success('Cập nhật giỏ hàng thành công');
         } catch (error) {
             console.error('Error updating cart:', error);
-            toast.error('Cập nhật giỏ hàng thất bại');
         }
     };
 
@@ -49,9 +46,7 @@ const Cart = () => {
         return null;
     }
 
-    const { items = [] } = cart;
-    const total = items.reduce((sum, item) => sum + item.ProductVariant.Product.price * item.quantity, 0);
-    const shippingFee = 30000; // Phí vận chuyển cố định 30,000 VND
+    const { items = [], shippingFee = 0, total = 0 } = cart;
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -61,14 +56,14 @@ const Cart = () => {
                     <p className="text-gray-500">Giỏ hàng của bạn đang trống</p>
                     <button
                         onClick={() => navigate('/')}
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
                     >
                         Tiếp tục mua sắm
                     </button>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2">
                         {items.map((item) => (
                             <CartItem
                                 key={item.id}
@@ -78,7 +73,7 @@ const Cart = () => {
                             />
                         ))}
                     </div>
-                    <div className="md:col-span-1">
+                    <div className="lg:col-span-1">
                         <CartSummary
                             total={total}
                             shippingFee={shippingFee}

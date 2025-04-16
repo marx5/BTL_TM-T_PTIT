@@ -92,8 +92,19 @@ exports.getCart = async (req, res, next) => {
 
     await transaction.commit();
 
+    // Tính tổng tiền
+    const total = cartItems.reduce(
+      (sum, item) => sum + item.ProductVariant.Product.price * item.quantity,
+      0
+    );
+
+    // Tính phí ship (free ship khi tổng tiền >= 1,000,000đ)
+    const shippingFee = total < 1000000 ? 30000 : 0;
+
     res.json({
       id: cart.id,
+      total,
+      shippingFee,
       items: cartItems.map(item => ({
         id: item.id,
         variantId: item.ProductVariantId,
@@ -103,6 +114,16 @@ exports.getCart = async (req, res, next) => {
           name: item.ProductVariant.Product.name,
           price: item.ProductVariant.Product.price,
           image: item.ProductVariant.Product.ProductImages[0]?.url
+        },
+        ProductVariant: {
+          id: item.ProductVariant.id,
+          size: item.ProductVariant.size,
+          color: item.ProductVariant.color,
+          Product: {
+            id: item.ProductVariant.Product.id,
+            name: item.ProductVariant.Product.name,
+            price: item.ProductVariant.Product.price
+          }
         }
       }))
     });
@@ -180,6 +201,13 @@ exports.updateCartItem = async (req, res, next) => {
         {
           model: ProductVariant,
           as: 'ProductVariant',
+          include: [
+            {
+              model: Product,
+              as: 'Product',
+              attributes: ['id', 'name', 'price'],
+            },
+          ],
           transaction
         }
       ],
@@ -197,11 +225,65 @@ exports.updateCartItem = async (req, res, next) => {
     cartItem.quantity = quantity;
     await cartItem.save({ transaction });
 
+    // Lấy lại toàn bộ giỏ hàng để tính tổng
+    const cart = await Cart.findOne({
+      where: { id: cartItem.CartId },
+      include: [
+        {
+          model: CartItem,
+          include: [
+            {
+              model: ProductVariant,
+              as: 'ProductVariant',
+              include: [
+                {
+                  model: Product,
+                  as: 'Product',
+                  attributes: ['id', 'name', 'price'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      transaction
+    });
+
+    // Tính tổng tiền
+    const total = cart.CartItems.reduce(
+      (sum, item) => sum + item.ProductVariant.Product.price * item.quantity,
+      0
+    );
+
+    // Tính phí ship
+    const shippingFee = total < 1000000 ? 30000 : 0;
+
     await transaction.commit();
 
     res.json({
       message: 'Cập nhật giỏ hàng thành công',
-      cartItem
+      total,
+      shippingFee,
+      cartItem: {
+        id: cartItem.id,
+        variantId: cartItem.ProductVariantId,
+        quantity: cartItem.quantity,
+        product: {
+          id: cartItem.ProductVariant.Product.id,
+          name: cartItem.ProductVariant.Product.name,
+          price: cartItem.ProductVariant.Product.price,
+        },
+        ProductVariant: {
+          id: cartItem.ProductVariant.id,
+          size: cartItem.ProductVariant.size,
+          color: cartItem.ProductVariant.color,
+          Product: {
+            id: cartItem.ProductVariant.Product.id,
+            name: cartItem.ProductVariant.Product.name,
+            price: cartItem.ProductVariant.Product.price
+          }
+        }
+      }
     });
   } catch (err) {
     await transaction.rollback();
