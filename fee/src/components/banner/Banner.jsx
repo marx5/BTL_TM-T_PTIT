@@ -7,8 +7,6 @@ const Banner = ({ banners }) => {
     const [touchEnd, setTouchEnd] = useState(null);
     const bannerRef = useRef(null);
 
-    // Debug log
-    console.log('Banners in component:', banners);
 
     // Kiểm tra và chuyển đổi dữ liệu banners thành mảng
     const bannerList = Array.isArray(banners) ? banners : [];
@@ -50,7 +48,6 @@ const Banner = ({ banners }) => {
     }, [bannerList]);
 
     if (!bannerList || bannerList.length === 0) {
-        console.log('No banners to display'); // Debug log
         return null;
     }
 
@@ -67,7 +64,6 @@ const Banner = ({ banners }) => {
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
                 {bannerList.map((banner, index) => {
-                    console.log('Rendering banner:', banner); // Debug log
                     return (
                         <div key={banner.id} className="w-full flex-shrink-0">
                             <Link to={`/product/${banner.Product.id}`}>

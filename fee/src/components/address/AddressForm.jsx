@@ -1,110 +1,169 @@
-import Input from '../common/Input';
+import React, { useState } from 'react';
+import { addAddress } from '../../services/address';
 import Button from '../common/Button';
-import { useState } from 'react';
+import Input from '../common/Input';
+import { toast } from 'react-hot-toast';
 
-const AddressForm = ({ address = null, onSubmit, onCancel }) => {
+const AddressForm = ({ onSuccess, onCancel }) => {
   const [formData, setFormData] = useState({
-    fullName: address?.fullName || '',
-    phone: address?.phone || '',
-    addressLine: address?.addressLine || '',
-    city: address?.city || '',
-    state: address?.state || '',
-    country: address?.country || '',
-    postalCode: address?.postalCode || '',
-    isDefault: address?.isDefault || false,
+    fullName: '',
+    phone: '',
+    addressLine: '',
+    city: '',
+    state: '',
+    country: 'Việt Nam',
+    postalCode: '',
+    isDefault: false
   });
-  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     try {
-      await onSubmit(formData);
+      await addAddress(formData);
+      onSuccess();
     } catch (err) {
-      setError(err.message || 'Không thể lưu địa chỉ.');
+      toast.error(err.message || 'Không thể thêm địa chỉ. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border rounded-lg p-6 bg-neutral">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-        {address?.id ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}
-      </h3>
-      <Input
-        name="fullName"
-        value={formData.fullName}
-        onChange={handleChange}
-        placeholder="Họ và tên"
-        error={error?.fullName}
-      />
-      <Input
-        name="phone"
-        value={formData.phone}
-        onChange={handleChange}
-        placeholder="Số điện thoại"
-        error={error?.phone}
-      />
-      <Input
-        name="addressLine"
-        value={formData.addressLine}
-        onChange={handleChange}
-        placeholder="Địa chỉ"
-        error={error?.addressLine}
-      />
-      <Input
-        name="city"
-        value={formData.city}
-        onChange={handleChange}
-        placeholder="Thành phố"
-        error={error?.city}
-      />
-      <Input
-        name="state"
-        value={formData.state}
-        onChange={handleChange}
-        placeholder="Tỉnh/Quận"
-        error={error?.state}
-      />
-      <Input
-        name="country"
-        value={formData.country}
-        onChange={handleChange}
-        placeholder="Quốc gia"
-        error={error?.country}
-      />
-      <Input
-        name="postalCode"
-        value={formData.postalCode}
-        onChange={handleChange}
-        placeholder="Mã bưu điện"
-        error={error?.postalCode}
-      />
-      <div className="mb-4">
-        <label className="flex items-center">
-          <input
-            type="checkbox"
-            name="isDefault"
-            checked={formData.isDefault}
-            onChange={handleChange}
-            className="mr-2"
-          />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Họ và tên <span className="text-red-500">*</span>
+        </label>
+        <Input
+          type="text"
+          name="fullName"
+          value={formData.fullName}
+          onChange={handleChange}
+          required
+          placeholder="Nhập họ và tên"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Số điện thoại <span className="text-red-500">*</span>
+        </label>
+        <Input
+          type="tel"
+          name="phone"
+          value={formData.phone}
+          onChange={handleChange}
+          required
+          placeholder="Nhập số điện thoại"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Địa chỉ <span className="text-red-500">*</span>
+        </label>
+        <Input
+          type="text"
+          name="addressLine"
+          value={formData.addressLine}
+          onChange={handleChange}
+          required
+          placeholder="Nhập địa chỉ cụ thể"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Thành phố <span className="text-red-500">*</span>
+        </label>
+        <Input
+          type="text"
+          name="city"
+          value={formData.city}
+          onChange={handleChange}
+          required
+          placeholder="Nhập thành phố"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Tỉnh/Thành phố <span className="text-red-500">*</span>
+        </label>
+        <Input
+          type="text"
+          name="state"
+          value={formData.state}
+          onChange={handleChange}
+          required
+          placeholder="Nhập tỉnh/thành phố"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Quốc gia <span className="text-red-500">*</span>
+        </label>
+        <Input
+          type="text"
+          name="country"
+          value={formData.country}
+          onChange={handleChange}
+          required
+          placeholder="Nhập quốc gia"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Mã bưu điện <span className="text-red-500">*</span>
+        </label>
+        <Input
+          type="text"
+          name="postalCode"
+          value={formData.postalCode}
+          onChange={handleChange}
+          required
+          placeholder="Nhập mã bưu điện"
+        />
+      </div>
+
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="isDefault"
+          name="isDefault"
+          checked={formData.isDefault}
+          onChange={handleChange}
+          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+        />
+        <label htmlFor="isDefault" className="ml-2 block text-sm text-gray-700">
           Đặt làm địa chỉ mặc định
         </label>
       </div>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" className="w-full">
-          Lưu
-        </Button>
-        <Button variant="outline" onClick={onCancel} className="w-full">
+
+      <div className="flex justify-end gap-4 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Hủy
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Đang thêm...' : 'Thêm địa chỉ'}
         </Button>
       </div>
     </form>

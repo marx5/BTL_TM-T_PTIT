@@ -59,6 +59,56 @@ export const updateCartItem = async (itemId, data) => {
 
 // Xóa sản phẩm khỏi giỏ hàng
 export const deleteCartItem = async (itemId) => {
-  const response = await api.delete(`/cart/items/${itemId}`);
-  return response.data;
+  try {
+    console.log('Deleting cart item:', itemId);
+    const response = await api.delete(`/cart/${itemId}`);
+    console.log('Delete response:', response.data);
+    
+    // Sau khi xóa, lấy lại toàn bộ giỏ hàng
+    const cartResponse = await api.get('/cart');
+    return cartResponse.data;
+  } catch (error) {
+    console.error('Error deleting cart item:', error);
+    if (error.response) {
+      // Server trả về lỗi
+      throw error;
+    } else if (error.request) {
+      // Không nhận được response từ server
+      throw new Error('Không thể kết nối đến server. Vui lòng thử lại sau.');
+    } else {
+      // Lỗi khi thiết lập request
+      throw new Error('Có lỗi xảy ra. Vui lòng thử lại sau.');
+    }
+  }
+};
+
+// Cập nhật trạng thái chọn sản phẩm trong giỏ hàng
+export const updateCartItemSelected = async (itemId, selected) => {
+  try {
+    const response = await api.put(`/cart/${itemId}/selected`, { selected });
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      // Server trả về lỗi
+      throw error;
+    } else if (error.request) {
+      // Không nhận được response từ server
+      throw new Error('Không thể kết nối đến server. Vui lòng thử lại sau.');
+    } else {
+      // Lỗi khi thiết lập request
+      throw new Error('Có lỗi xảy ra. Vui lòng thử lại sau.');
+    }
+  }
+};
+
+export const updateCartItemSelectedService = async (itemId, selected) => {
+  try {
+    console.log('Calling API to update selected status:', { itemId, selected });
+    const response = await api.put(`/cart/${itemId}/selected`, { selected });
+    console.log('API response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating cart item selected status:', error);
+    throw error;
+  }
 };

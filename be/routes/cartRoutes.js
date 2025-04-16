@@ -87,6 +87,29 @@ router.put('/:id', auth, cartController.updateCartItem);
 
 /**
  * @swagger
+ * /api/cart/{id}/selected:
+ *   put:
+ *     summary: Cập nhật trạng thái chọn sản phẩm
+ *     tags: [Giỏ hàng]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID sản phẩm trong giỏ hàng
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ *       401:
+ *         description: Không được phép truy cập
+ */
+router.put('/:id/selected', auth, cartController.updateCartItemSelected);
+
+/**
+ * @swagger
  * /api/cart/{id}:
  *   delete:
  *     summary: Xóa sản phẩm khỏi giỏ hàng

@@ -5,7 +5,7 @@ export const createOrder = async (data, token) => {
   const response = await api.post('/orders', data, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return response;
+  return response.data;
 };
 
 export const buyNow = async (data, token) => {
@@ -60,16 +60,22 @@ export const getUserOrders = async (userId, page = 1, limit = 10) => {
 };
 
 export const getOrderById = async (id, token) => {
-  const response = await api.get(`/orders/my-orders/history`, {
+  const response = await api.get(`/orders/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
-    params: { page: 1, limit: 1, id },
   });
-  return response.orders[0];
+  return response.data;
 };
 
 export const createPayment = async (data, token) => {
   const response = await api.post('/payments', data, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return response;
+  return response.data;
+};
+
+export const getOrders = async (token) => {
+  const response = await api.get('/orders', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data;
 };

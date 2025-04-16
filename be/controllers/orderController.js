@@ -42,6 +42,10 @@ exports.createOrder = async (req, res, next) => {
     isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
   });
   try {
+    if (!req.user || !req.user.id) {
+      throw new AppError('unauthorized', 401);
+    }
+
     const { error, value } = createOrderSchema.validate(req.body);
     if (error) {
       throw new AppError(error.details[0].message, 400);
@@ -50,33 +54,36 @@ exports.createOrder = async (req, res, next) => {
     const userId = req.user.id;
     const { addressId, paymentMethod } = value;
 
-    const cart = await Cart.findOne(
-      {
-        where: { UserId: userId },
-        include: [
-          {
-            model: CartItem,
-            include: [
-              {
-                model: ProductVariant,
-                as: 'ProductVariant',
-                include: [
-                  {
-                    model: Product,
-                    as: 'Product',
-                    attributes: ['id', 'name', 'price', 'isActive'],
-                    where: { isActive: true },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      { transaction }
-    );
+    // First, find the cart
+    const cart = await Cart.findOne({
+      where: { UserId: userId },
+      transaction
+    });
 
-    if (!cart || !cart.CartItems.length) {
+    if (!cart) {
+      throw new AppError('cart_not_found', 404);
+    }
+
+    // Then find selected cart items with their products
+    const cartItems = await CartItem.findAll({
+      where: { 
+        CartId: cart.id,
+        selected: true 
+      },
+      include: [{
+        model: ProductVariant,
+        as: 'ProductVariant',
+        include: [{
+          model: Product,
+          as: 'Product',
+          attributes: ['id', 'name', 'price', 'isActive'],
+          where: { isActive: true }
+        }]
+      }],
+      transaction
+    });
+
+    if (!cartItems || cartItems.length === 0) {
       throw new AppError('cart_empty', 400);
     }
 
@@ -85,26 +92,32 @@ exports.createOrder = async (req, res, next) => {
       throw new AppError('invalid_address', 400);
     }
 
-    for (const item of cart.CartItems) {
+    // Validate stock and calculate total
+    let total = 0;
+    for (const item of cartItems) {
+      if (!item.ProductVariant || !item.ProductVariant.Product) {
+        throw new AppError('invalid_cart_item', 400);
+      }
+
       const variant = await ProductVariant.findByPk(item.ProductVariantId, {
         lock: transaction.LOCK.UPDATE,
-        transaction,
+        transaction
       });
+
       if (!variant) {
         throw new AppError('variant_not_found', 404);
       }
-      if (item.quantity > variant.stock) {
+
+      if (!variant.stock || item.quantity > variant.stock) {
         throw new AppError(
           `Số lượng ${item.ProductVariant.Product.name} vượt quá tồn kho`,
           400
         );
       }
+
+      total += item.ProductVariant.Product.price * item.quantity;
     }
 
-    const total = cart.CartItems.reduce(
-      (sum, item) => sum + item.ProductVariant.Product.price * item.quantity,
-      0
-    );
     const shippingFee = total < 1000000 ? 30000 : 0;
 
     const order = await Order.create(
@@ -114,32 +127,43 @@ exports.createOrder = async (req, res, next) => {
         total,
         shippingFee,
         paymentMethod,
+        status: 'pending'
       },
       { transaction }
     );
 
-    for (const item of cart.CartItems) {
+    // Create order products and update stock
+    for (const item of cartItems) {
       await OrderProduct.create(
         {
           OrderId: order.id,
           ProductVariantId: item.ProductVariantId,
-          quantity: item.quantity,
+          quantity: item.quantity
         },
         { transaction }
       );
 
       const variant = await ProductVariant.findByPk(item.ProductVariantId, {
         lock: transaction.LOCK.UPDATE,
-        transaction,
+        transaction
       });
       variant.stock -= item.quantity;
       await variant.save({ transaction });
     }
 
-    await CartItem.destroy({ where: { CartId: cart.id }, transaction });
+    // Remove selected items from cart
+    await CartItem.destroy({ 
+      where: { 
+        CartId: cart.id, 
+        selected: true 
+      }, 
+      transaction 
+    });
 
     const user = await User.findByPk(userId, { transaction });
-    await sendOrderConfirmationEmail(user.email, order.id, total, shippingFee);
+    if (user && user.email) {
+      await sendOrderConfirmationEmail(user.email, order.id, total, shippingFee);
+    }
 
     await transaction.commit();
 
@@ -157,18 +181,19 @@ exports.createOrder = async (req, res, next) => {
           city: address.city,
           state: address.state,
           country: address.country,
-          postalCode: address.postalCode,
+          postalCode: address.postalCode
         },
-        items: cart.CartItems.map((item) => ({
+        items: cartItems.map((item) => ({
           productId: item.ProductVariant.Product.id,
           name: item.ProductVariant.Product.name,
           quantity: item.quantity,
-          price: item.ProductVariant.Product.price,
-        })),
-      },
+          price: item.ProductVariant.Product.price
+        }))
+      }
     });
   } catch (err) {
     await transaction.rollback();
+    console.error('Error in createOrder:', err);
     next(err);
   }
 };
