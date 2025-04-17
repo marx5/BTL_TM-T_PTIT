@@ -469,3 +469,51 @@ exports.deleteProductVariant = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getProductsByCategory = async (req, res, next) => {
+  try {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Lấy danh mục cha và tất cả danh mục con
+    const category = await Category.findByPk(categoryId, {
+      include: [{
+        model: Category,
+        as: 'Children',
+        attributes: ['id'],
+      }],
+    });
+
+    if (!category) {
+      throw new AppError('category_not_found', 404);
+    }
+
+    // Tạo mảng chứa tất cả ID danh mục cần tìm
+    const categoryIds = [
+      category.id,
+      ...category.Children.map(child => child.id)
+    ];
+
+    const products = await Product.findAndCountAll({
+      where: {
+        CategoryId: categoryIds,
+        isActive: true
+      },
+      include: [
+        { model: ProductImage, as: 'ProductImages' },
+        { model: ProductVariant, as: 'ProductVariants' },
+        { model: Category, as: 'Category' },
+      ],
+      limit,
+      offset,
+    });
+
+    res.json({
+      products: products.rows,
+      totalPages: Math.ceil(products.count / limit),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
