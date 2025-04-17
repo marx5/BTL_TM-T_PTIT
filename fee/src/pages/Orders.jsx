@@ -109,7 +109,7 @@ const Orders = () => {
                     const fullImageUrl = imageUrl
                       ? imageUrl.startsWith('http')
                         ? imageUrl
-                        : `${API_BASE_URL}/uploads/${cleanImageUrl(imageUrl)}`
+                        : `${API_BASE_URL}/${cleanImageUrl(imageUrl)}`
                       : '/placeholder.png';
 
                     return (

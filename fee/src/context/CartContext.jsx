@@ -19,7 +19,7 @@ const formatCartData = (cartData) => {
       color: item.ProductVariant?.color || '',
       product: {
         ...item.product,
-        image: item.product.image ? `http://localhost:3456/uploads/${item.product.image.replace(/^\/+/, '').replace(/^Uploads\//, '')}` : null
+        image: item.product.image ? `http://localhost:3456/${item.product.image.replace(/^\/+/, '').replace(/^Uploads\//, '')}` : null
       }
     }))
   };

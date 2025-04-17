@@ -102,7 +102,7 @@ exports.getProductById = async (req, res, next) => {
 
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, categoryId, variants, mainImageIndex } = req.body;
+    const { name, description, price, categoryId, variants, mainImageId } = req.body;
     const product = await Product.create({ name, description, price, CategoryId: categoryId });
 
     if (variants) {
@@ -117,15 +117,31 @@ exports.createProduct = async (req, res, next) => {
       }
     }
 
+    // Đầu tiên tạo tất cả ảnh với isMain = false
     if (req.files) {
-      for (let i = 0; i < req.files.length; i++) {
-        const file = req.files[i];
-        const isMain = i === parseInt(mainImageIndex); // Ảnh chính được xác định bởi mainImageIndex
+      for (const file of req.files) {
         await ProductImage.create({
           ProductId: product.id,
           url: `/uploads/${file.filename}`,
-          isMain,
+          isMain: false,
         });
+      }
+    }
+
+    // Sau đó cập nhật ảnh chính nếu có
+    if (mainImageId) {
+      await ProductImage.update(
+        { isMain: true },
+        { where: { id: mainImageId, ProductId: product.id } }
+      );
+    } else if (req.files && req.files.length > 0) {
+      // Nếu không chọn ảnh chính, lấy ảnh đầu tiên làm ảnh chính
+      const firstImage = await ProductImage.findOne({
+        where: { ProductId: product.id },
+        order: [['id', 'ASC']]
+      });
+      if (firstImage) {
+        await firstImage.update({ isMain: true });
       }
     }
 
@@ -142,7 +158,7 @@ exports.createProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, price, categoryId, mainImageIndex } = req.body;
+    const { name, description, price, categoryId, mainImageId } = req.body;
     const files = req.files;
 
     const product = await Product.findByPk(id, {
@@ -167,9 +183,9 @@ exports.updateProduct = async (req, res, next) => {
     // Xử lý ảnh
     if (files && files.length > 0) {
       // Thêm ảnh mới
-      const newImages = files.map((file, index) => ({
+      const newImages = files.map((file) => ({
         url: file.filename,
-        isMain: index === parseInt(mainImageIndex),
+        isMain: false, // Mặc định ảnh mới không phải ảnh chính
         ProductId: product.id,
       }));
 
@@ -177,14 +193,14 @@ exports.updateProduct = async (req, res, next) => {
     }
 
     // Cập nhật ảnh chính nếu có thay đổi
-    if (mainImageIndex !== undefined) {
+    if (mainImageId !== undefined) {
       await ProductImage.update(
         { isMain: false },
         { where: { ProductId: product.id } }
       );
       await ProductImage.update(
         { isMain: true },
-        { where: { ProductId: product.id, id: mainImageIndex } }
+        { where: { ProductId: product.id, id: mainImageId } }
       );
     }
 
