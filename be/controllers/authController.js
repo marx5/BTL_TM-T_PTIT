@@ -7,6 +7,7 @@ const AppError = require('../utils/appError');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 const Joi = require('joi');
+const { verifyRecaptcha } = require('../config/recaptcha');
 
 const registerSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -14,11 +15,13 @@ const registerSchema = Joi.object({
   name: Joi.string().required(),
   phone: Joi.string().required(),
   birthday: Joi.date().required(),
+  recaptchaToken: Joi.string().required(),
 });
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required(),
+  recaptchaToken: Joi.string().required(),
 });
 
 exports.register = async (req, res, next) => {
@@ -28,7 +31,13 @@ exports.register = async (req, res, next) => {
       throw new AppError(error.details[0].message, 400);
     }
 
-    const { email, password, name, phone, birthday } = value;
+    const { email, password, name, phone, birthday, recaptchaToken } = value;
+
+    // Verify reCAPTCHA
+    const isRecaptchaValid = await verifyRecaptcha(recaptchaToken);
+    if (!isRecaptchaValid) {
+      throw new AppError('reCAPTCHA verification failed', 400);
+    }
 
     const existingUser = await User.findOne({
       where: {
@@ -83,7 +92,14 @@ exports.login = async (req, res, next) => {
       throw new AppError(error.details[0].message, 400);
     }
 
-    const { email, password } = value;
+    const { email, password, recaptchaToken } = value;
+
+    // Verify reCAPTCHA
+    const isRecaptchaValid = await verifyRecaptcha(recaptchaToken);
+    if (!isRecaptchaValid) {
+      throw new AppError('reCAPTCHA verification failed', 400);
+    }
+
     const user = await User.findOne({ where: { email } });
     if (!user) {
       throw new AppError('invalid_credentials', 401);

@@ -7,23 +7,29 @@ import toast from 'react-hot-toast';
 
 const Register = () => {
     const navigate = useNavigate();
-    const { registerUser, user, loading } = useAuth();
+    const { register, user, loading } = useAuth();
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (loading) return;
 
         if (user) {
-            navigate('/'); // Chuyển hướng về trang chủ nếu đã đăng nhập
+            navigate('/');
         }
     }, [user, loading, navigate]);
 
     const handleSubmit = async (data) => {
         try {
-            await registerUser(data);
+            console.log('Registering with data:', data);
+            const response = await register(data);
+            console.log('Registration response:', response);
             toast.success('Đăng ký thành công! Vui lòng kiểm tra email để xác minh.');
             navigate('/verify-email');
         } catch (err) {
-            throw err;
+            console.error('Registration error:', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Đăng ký thất bại.';
+            setError(errorMessage);
+            toast.error(errorMessage);
         }
     };
 
@@ -32,7 +38,7 @@ const Register = () => {
     return (
         <div className="max-w-md mx-auto px-4 py-10">
             <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Đăng ký</h1>
-            <RegisterForm onSubmit={handleSubmit} />
+            <RegisterForm onSubmit={handleSubmit} error={error} />
             <p className="mt-4 text-center text-gray-600">
                 Đã có tài khoản?{' '}
                 <Link to="/login" className="text-primary hover:underline">

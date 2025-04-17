@@ -43,8 +43,9 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    toast.success('Đăng xuất thành công.');
-    navigate('/login');
+    setShowLogoutConfirm(false);
+    toast.success('Đăng xuất thành công!');
+    navigate('/');
   };
 
   const confirmLogout = () => {
