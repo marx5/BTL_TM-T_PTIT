@@ -78,16 +78,22 @@ export const AuthProvider = ({ children }) => {
         checkToken();
     }, []);
 
-    const loginUser = async (email, password) => {
+    const loginUser = async (email, password, recaptchaToken) => {
         try {
-            const response = await login(email, password);
-            const { token, user } = response;
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
-            setUser(user);
+            const response = await login(email, password, recaptchaToken);
+            console.log('Login response in context:', response);
+
+            if (!response || !response.token || !response.user) {
+                throw new Error('Invalid response format from server');
+            }
+
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            setUser(response.user);
             setIsAuthenticated(true);
             return response;
         } catch (error) {
+            console.error('Login error in context:', error);
             throw error;
         }
     };
@@ -102,10 +108,15 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logoutUser = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        setIsAuthenticated(false);
+        try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+            setIsAuthenticated(false);
+        } catch (error) {
+            console.error('Logout error:', error);
+            toast.error('Có lỗi xảy ra khi đăng xuất');
+        }
     };
 
     const updateUserProfile = async (userData) => {

@@ -1,27 +1,46 @@
 import api from './api';
 
-export const login = async (email, password) => {
+export const login = async (email, password, recaptchaToken) => {
   try {
-    // Gửi yêu cầu đăng nhập
-    const response = await api.post('/auth/login', { email, password });
+    console.log('Sending login request with:', { email, password, recaptchaToken });
+    const response = await api.post('/auth/login', { 
+      email, 
+      password, 
+      recaptchaToken 
+    });
 
-    // Kiểm tra cấu trúc của response (response.data nếu nó chứa token)
-    if (response.data && response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      console.log('Token đã được lưu:', response.data.token);
+    console.log('Login response:', response);
+
+    // Kiểm tra response và response.data
+    if (!response || !response.data) {
+      throw new Error('Invalid response from server');
     }
 
-    return response;
+    // Lấy token từ response data
+    const { token, user } = response.data;
+    
+    if (!token) {
+      throw new Error('No token received from server');
+    }
+
+    // Lưu token vào localStorage
+    localStorage.setItem('token', token);
+    console.log('Token saved:', token);
+
+    return response.data;
   } catch (error) {
-    console.error('Login error:', error);
-    throw error; // Để có thể xử lý lỗi ngoài component
+    console.error('Login error details:', error.response?.data || error.message);
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw new Error('Đăng nhập thất bại. Vui lòng thử lại.');
   }
 };
 
 export const register = async (userData) => {
   try {
     const response = await api.post('/auth/register', userData);
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Register error:', error);
     throw error;
@@ -30,12 +49,12 @@ export const register = async (userData) => {
 
 export const verifyEmail = async (token) => {
   const response = await api.get(`/auth/verify-email?token=${token}`);
-  return response;
+  return response.data;
 };
 
 export const forgotPassword = async (email) => {
   const response = await api.post('/auth/forgot-password', { email });
-  return response;
+  return response.data;
 };
 
 export const resetPassword = async (token, newPassword) => {
@@ -43,7 +62,7 @@ export const resetPassword = async (token, newPassword) => {
     token,
     newPassword,
   });
-  return response;
+  return response.data;
 };
 
 export const getProfile = async () => {

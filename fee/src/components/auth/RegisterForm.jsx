@@ -1,24 +1,26 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Input from '../common/Input';
 import Button from '../common/Button';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const RegisterForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        confirmPassword: '', // Thêm trường mật khẩu xác nhận
+        confirmPassword: '',
         name: '',
         phone: '',
         birthday: '',
     });
     const [error, setError] = useState(null);
-    const [showPassword, setShowPassword] = useState(false); // State để hiển thị/ẩn mật khẩu
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State để hiển thị/ẩn mật khẩu xác nhận
-    const [passwordMatchError, setPasswordMatchError] = useState(null); // Lỗi khi mật khẩu không khớp
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordMatchError, setPasswordMatchError] = useState(null);
+    const [recaptchaValue, setRecaptchaValue] = useState(null);
+    const recaptchaRef = useRef(null);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        // Kiểm tra mật khẩu có khớp không khi người dùng nhập
         if (e.target.name === 'password' || e.target.name === 'confirmPassword') {
             const password = e.target.name === 'password' ? e.target.value : formData.password;
             const confirmPassword = e.target.name === 'confirmPassword' ? e.target.value : formData.confirmPassword;
@@ -30,28 +32,45 @@ const RegisterForm = ({ onSubmit }) => {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // Ngăn chặn load lại trang
-        setError(null); // Xóa lỗi trước đó
-        setPasswordMatchError(null); // Xóa lỗi mật khẩu không khớp
+    const handleRecaptchaChange = (value) => {
+        console.log("reCAPTCHA value:", value);
+        setRecaptchaValue(value);
+    };
 
-        // Kiểm tra mật khẩu có khớp không trước khi gửi
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setPasswordMatchError(null);
+
         if (formData.password !== formData.confirmPassword) {
             setPasswordMatchError('Mật khẩu không khớp.');
             return;
         }
 
+        if (!recaptchaValue) {
+            setError('Vui lòng xác nhận reCAPTCHA');
+            return;
+        }
+
         try {
-            await onSubmit({
+            const registerData = {
                 email: formData.email,
                 password: formData.password,
                 name: formData.name,
                 phone: formData.phone,
                 birthday: formData.birthday,
-            });
+                recaptchaToken: recaptchaValue
+            };
+            console.log('Submitting registration data:', registerData);
+            await onSubmit(registerData);
             setError(null);
         } catch (err) {
+            console.error('Registration error:', err);
             setError(err.message || 'Đăng ký thất bại.');
+            if (recaptchaRef.current) {
+                recaptchaRef.current.reset();
+            }
+            setRecaptchaValue(null);
         }
     };
 
@@ -73,6 +92,7 @@ const RegisterForm = ({ onSubmit }) => {
                 placeholder="Email"
                 error={error?.includes('email') ? error : null}
                 className="w-full"
+                required
             />
             <div className="relative">
                 <Input
@@ -83,6 +103,7 @@ const RegisterForm = ({ onSubmit }) => {
                     placeholder="Mật khẩu"
                     error={error?.includes('password') || passwordMatchError ? error || passwordMatchError : null}
                     className="w-full pr-10"
+                    required
                 />
                 <button
                     type="button"
@@ -108,8 +129,9 @@ const RegisterForm = ({ onSubmit }) => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Xác nhận mật khẩu"
-                    error={passwordMatchError ? passwordMatchError : null}
+                    error={passwordMatchError}
                     className="w-full pr-10"
+                    required
                 />
                 <button
                     type="button"
@@ -135,6 +157,7 @@ const RegisterForm = ({ onSubmit }) => {
                 placeholder="Họ và tên"
                 error={error?.includes('name') ? error : null}
                 className="w-full"
+                required
             />
             <Input
                 name="phone"
@@ -143,6 +166,7 @@ const RegisterForm = ({ onSubmit }) => {
                 placeholder="Số điện thoại"
                 error={error?.includes('phone') ? error : null}
                 className="w-full"
+                required
             />
             <Input
                 name="birthday"
@@ -152,14 +176,22 @@ const RegisterForm = ({ onSubmit }) => {
                 placeholder="Ngày sinh (YYYY-MM-DD)"
                 error={error?.includes('birthday') ? error : null}
                 className="w-full"
+                required
             />
-            {error && !error.includes('email') && !error.includes('password') && !error.includes('name') && !error.includes('phone') && !error.includes('birthday') && (
-                <p className="text-red-500 text-sm">{error}</p>
+            <div className="flex justify-center">
+                <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+                    onChange={handleRecaptchaChange}
+                />
+            </div>
+            {error && (
+                <p className="text-red-500 text-sm text-center">{error}</p>
             )}
             <Button
                 type="submit"
                 className="w-full"
-                disabled={!!passwordMatchError} // Vô hiệu hóa nút nếu mật khẩu không khớp
+                disabled={!!passwordMatchError || !recaptchaValue || !formData.email || !formData.password || !formData.name || !formData.phone || !formData.birthday}
             >
                 Đăng ký
             </Button>
