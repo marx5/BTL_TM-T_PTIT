@@ -421,4 +421,46 @@ router.post('/:productId/variants', auth, adminAuth, productController.addProduc
 router.put('/:productId/variants/:variantId', auth, adminAuth, productController.updateProductVariant);
 router.delete('/:productId/variants/:variantId', auth, adminAuth, productController.deleteProductVariant);
 
+/**
+ * @swagger
+ * /api/products/category/{categoryId}:
+ *   get:
+ *     summary: Lấy sản phẩm theo danh mục (bao gồm cả danh mục con)
+ *     tags: [Sản phẩm]
+ *     parameters:
+ *       - name: categoryId
+ *         in: path
+ *         required: true
+ *         description: ID danh mục
+ *         schema:
+ *           type: integer
+ *       - name: page
+ *         in: query
+ *         description: Số trang
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         description: Số mục trên mỗi trang
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Danh sách sản phẩm
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 totalPages:
+ *                   type: integer
+ */
+router.get('/category/:categoryId', productController.getProductsByCategory);
+
 module.exports = router;

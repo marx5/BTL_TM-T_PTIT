@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import useApi from '../hooks/useApi';
 import { getProducts } from '../services/product';
 import ProductCard from '../components/product/ProductCard';
 
 const Category = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const { data: products, loading, error, callApi } = useApi();
 
     useEffect(() => {
-        callApi(getProducts, { categoryId: parseInt(id) });
-    }, [id, callApi]);
+        const categoryId = parseInt(id);
+        if (isNaN(categoryId)) {
+            navigate('/products');
+            return;
+        }
+        callApi(() => getProducts(categoryId));
+    }, [id, callApi, navigate]);
 
     if (loading) return <div className="text-center mt-10">Đang tải...</div>;
     if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;

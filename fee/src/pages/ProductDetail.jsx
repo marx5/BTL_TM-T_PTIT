@@ -9,6 +9,8 @@ import { useCart } from '../context/CartContext';
 import Button from '../components/common/Button';
 import Loader from '../components/common/Loader';
 import toast from 'react-hot-toast';
+import AddressForm from '../components/address/AddressForm';
+import AddressList from '../components/address/AddressList';
 
 const API_BASE_URL = 'http://localhost:3456';
 
@@ -29,6 +31,7 @@ const ProductDetail = () => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [error, setError] = useState(null);
+    const [showAddressForm, setShowAddressForm] = useState(false);
 
     useEffect(() => {
         fetchProduct(getProductById, id);
@@ -81,7 +84,7 @@ const ProductDetail = () => {
                 },
                 token
             );
-            navigate(`/checkout/${response.order.id}`);
+            navigate(`/order-confirmation/${response.order.id}`);
         } catch (err) {
             setError(err.message || 'Không thể tạo đơn hàng.');
         }
@@ -261,20 +264,43 @@ const ProductDetail = () => {
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Địa chỉ giao hàng:</label>
                         {token && user ? (
-                            <select
-                                className="border rounded-md p-2 w-full"
-                                value={addressId || ''}
-                                onChange={(e) => setAddressId(parseInt(e.target.value))}
-                            >
-                                <option value="">Chọn địa chỉ</option>
-                                {addresses && addresses.map((address) => (
-                                    <option key={address.id} value={address.id}>
-                                        {address.fullName} - {address.phone} - {address.addressLine}, {address.ward}, {address.district}, {address.city}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="space-y-4">
+                                {showAddressForm ? (
+                                    <AddressForm
+                                        onSuccess={() => {
+                                            setShowAddressForm(false);
+                                            toast.success('Đã thêm địa chỉ mới');
+                                            fetchAddresses(getAddresses, token);
+                                        }}
+                                        onCancel={() => setShowAddressForm(false)}
+                                    />
+                                ) : (
+                                    <>
+                                        <AddressList
+                                            addresses={addresses || []}
+                                            selectedAddress={addressId}
+                                            onSelectAddress={(address) => setAddressId(address.id)}
+                                        />
+                                        <Button
+                                            onClick={() => setShowAddressForm(true)}
+                                            className="mt-4"
+                                            variant="outline"
+                                        >
+                                            + Thêm địa chỉ mới
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         ) : (
-                            <p className="text-red-500">Vui lòng đăng nhập để chọn địa chỉ giao hàng.</p>
+                            <div className="space-y-2">
+                                <p className="text-red-500">Vui lòng đăng nhập để chọn địa chỉ giao hàng.</p>
+                                <Button
+                                    variant="primary"
+                                    onClick={() => navigate('/login')}
+                                >
+                                    Đăng nhập
+                                </Button>
+                            </div>
                         )}
                     </div>
 

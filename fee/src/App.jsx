@@ -29,6 +29,7 @@ import AdminProductDetail from './pages/admin/ProductDetail';
 import OrdersAdmin from './pages/admin/Orders';
 import OrderDetail from './pages/admin/OrderDetail';
 import Banners from './pages/admin/Banners';
+import OrderConfirmation from './pages/OrderConfirmation';
 import { Toaster } from 'react-hot-toast';
 
 const App = () => {
@@ -61,6 +62,7 @@ const App = () => {
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/products/category/:categoryId" element={<Products />} />
+                    <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
                   </Routes>
                   <Footer />
                 </>

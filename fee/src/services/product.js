@@ -32,9 +32,16 @@ const processProductImages = (product) => {
 
 export const getProducts = async (categoryId = null) => {
   try {
-    const response = await api.get('/products', {
-      params: categoryId ? { categoryId } : {}
-    });
+    let response;
+    if (categoryId) {
+      const parsedId = parseInt(categoryId);
+      if (isNaN(parsedId)) {
+        throw new Error('categoryId must be a number');
+      }
+      response = await api.get(`/products/category/${parsedId}`);
+    } else {
+      response = await api.get('/products');
+    }
     const products = Array.isArray(response.data.products) ? response.data.products : [];
     return products.map(processProductImages);
   } catch (error) {
