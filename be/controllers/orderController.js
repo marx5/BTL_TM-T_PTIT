@@ -18,7 +18,7 @@ const { stringify } = require('flatted');
 
 const createOrderSchema = Joi.object({
   addressId: Joi.number().integer().required(),
-  paymentMethod: Joi.string().valid('paypal', 'cod').default('cod'),
+  paymentMethod: Joi.string().valid('momo', 'cod').default('cod'),
 });
 
 const buyNowSchema = Joi.object({
@@ -34,7 +34,7 @@ const buyNowSchema = Joi.object({
     'any.required': 'ID địa chỉ là bắt buộc.',
     'number.base': 'ID địa chỉ phải là số.',
   }),
-  paymentMethod: Joi.string().valid('paypal', 'cod').default('cod'),
+  paymentMethod: Joi.string().valid('momo', 'cod').default('cod'),
 });
 
 exports.createOrder = async (req, res, next) => {

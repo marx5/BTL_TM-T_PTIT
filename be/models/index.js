@@ -11,7 +11,7 @@ const Favorite = require('./Favorite');
 const Address = require('./Address');
 const Review = require('./Review');
 const Payment = require('./Payment');
-const TokenBlacklist = require('./TokenBlacklist');
+// const TokenBlacklist = require('./TokenBlacklist');
 const Banner = require('./Banner');
 
 const models = {
@@ -29,7 +29,7 @@ const models = {
   Address,
   Review,
   Payment,
-  TokenBlacklist,
+  // TokenBlacklist,
 };
 
 // Thiết lập quan hệ theo thứ tự cụ thể
