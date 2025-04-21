@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const TokenBlacklist = require('../models/TokenBlacklist');
+// const TokenBlacklist = require('../models/TokenBlacklist');
 const User = require('../models/User');
 const AppError = require('../utils/appError');
 
@@ -26,12 +26,12 @@ const auth = async (req, res, next) => {
     const token = parts[1];
     console.log('Token found:', token);
     
-    // Check if token is blacklisted
-    const blacklisted = await TokenBlacklist.findOne({ where: { token } });
-    if (blacklisted) {
-      console.log('Token is blacklisted');
-      throw new AppError('token_blacklisted', 401);
-    }
+    // // Check if token is blacklisted
+    // const blacklisted = await TokenBlacklist.findOne({ where: { token } });
+    // if (blacklisted) {
+    //   console.log('Token is blacklisted');
+    //   throw new AppError('token_blacklisted', 401);
+    // }
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

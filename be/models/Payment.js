@@ -27,14 +27,14 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
-  paypalPaymentId: {
+  momoPaymentId: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  paypalTransactionId: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
+  // paypalTransactionId: {
+  //   type: DataTypes.STRING,
+  //   allowNull: true,
+  // },
 });
 
 Payment.associate = (models) => {

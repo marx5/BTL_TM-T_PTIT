@@ -72,7 +72,7 @@ const { auth, adminAuth } = require('../middleware/auth');
  *       401:
  *         description: Không được phép truy cập
  */
-router.post('/', auth, orderController.createOrder);
+router.post('/', auth, orderController.createOrder); // gây lỗi
 
 /**
  * @swagger

@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const TokenBlacklist = require('../models/TokenBlacklist');
+// const TokenBlacklist = require('../models/TokenBlacklist');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendVerificationEmail, sendResetPasswordEmail } = require('../utils/email');
@@ -135,8 +135,8 @@ exports.login = async (req, res, next) => {
 
 exports.logout = async (req, res, next) => {
   try {
-    await TokenBlacklist.create({ token: req.token,
-     });
+    // await TokenBlacklist.create({ token: req.token,
+    //  });
     res.json({ message: 'Đăng xuất thành công.' });
   } catch (err) {
     next(err);

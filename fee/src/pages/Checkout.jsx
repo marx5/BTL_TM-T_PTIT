@@ -55,49 +55,49 @@ const Checkout = () => {
 
       console.log('Order created:', orderResponse);
 
-      // Kiểm tra orderResponse có id không
-      if (!orderResponse || !orderResponse.id) {
-        // throw new Error('Không thể tạo đơn hàng. Vui lòng thử lại.');
-      }
-
-      // if (paymentMethod === 'paypal') {
-      //   try {
-      //     // Create PayPal payment
-      //     const paymentResponse = await createPayment({
-      //       orderId: orderResponse.id,
-      //       paymentMethod: 'paypal'
-      //     }, token);
-
-      //     console.log('PayPal payment created:', paymentResponse);
-
-      //     if (!paymentResponse || !paymentResponse.approvalUrl) {
-      //       throw new Error('Không thể tạo thanh toán PayPal');
-      //     }
-
-      //     // Validate URL
-      //     try {
-      //       const url = new URL(paymentResponse.approvalUrl);
-      //       if (url.protocol !== 'https:') {
-      //         throw new Error('URL không an toàn');
-      //       }
-      //     } catch (err) {
-      //       console.error('Invalid PayPal URL:', err);
-      //       throw new Error('URL thanh toán PayPal không hợp lệ');
-      //     }
-
-      //     // Redirect to PayPal
-      //     console.log('Redirecting to PayPal:', paymentResponse.approvalUrl);
-      //     window.location.href = paymentResponse.approvalUrl;
-      //     return;
-      //   } catch (err) {
-      //     console.error('PayPal payment error:', err);
-      //     toast.error(err.message || 'Không thể tạo thanh toán PayPal. Vui lòng thử lại.');
-      //     return;
-      //   }
+      // // Kiểm tra orderResponse có id không
+      // if (!orderResponse || !orderResponse.id) {
+      //   throw new Error('Không thể tạo đơn hàng. Vui lòng thử lại.');
       // }
 
-      // For COD payment
-      toast.success('Đơn hàng đã được tạo thành công!');
+      if (paymentMethod === 'momo') {
+        try {
+          // Create PayPal payment
+          const paymentResponse = await createPayment({
+            orderId: orderResponse.id,
+            paymentMethod: 'momo'
+          }, token);
+
+          console.log('momo payment created:', paymentResponse);
+
+          if (!paymentResponse || !paymentResponse.approvalUrl) {
+            throw new Error('Không thể tạo thanh toán momo');
+          }
+
+          // Validate URL
+          try {
+            const url = new URL(paymentResponse.approvalUrl);
+            if (url.protocol !== 'https:') {
+              throw new Error('URL không an toàn');
+            }
+          } catch (err) {
+            console.error('Invalid momo URL:', err);
+            throw new Error('URL thanh toán PayPal không hợp lệ');
+          }
+
+          // Redirect to PayPal
+          console.log('Redirecting to PayPal:', paymentResponse.approvalUrl);
+          window.location.href = paymentResponse.approvalUrl;
+          return;
+        } catch (err) {
+          console.error('PayPal payment error:', err);
+          toast.error(err.message || 'Không thể tạo thanh toán PayPal. Vui lòng thử lại.');
+          return;
+        }
+      }
+
+    // For COD payment
+    toast.success('Đơn hàng đã được tạo thành công!');
       navigate(`/checkout/${orderResponse.id}`);
     } catch (err) {
       console.error('Order creation error:', err);
