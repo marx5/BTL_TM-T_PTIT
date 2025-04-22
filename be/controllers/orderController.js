@@ -18,7 +18,7 @@ const { stringify } = require('flatted');
 
 const createOrderSchema = Joi.object({
   addressId: Joi.number().integer().required(),
-  paymentMethod: Joi.string().valid('momo', 'cod').default('cod'),
+  paymentMethod: Joi.string().valid('momo', 'cod').default('momo'),
 });
 
 const buyNowSchema = Joi.object({
@@ -37,7 +37,7 @@ const buyNowSchema = Joi.object({
   paymentMethod: Joi.string().valid('momo', 'cod').default('cod'),
 });
 
-exports.createOrder = async (req, res, next) => {
+exports.createOrder = async (req, res, next) => { // thông báo có lỗi khi tạo order
   const transaction = await sequelize.transaction({
     isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
   });
@@ -191,6 +191,10 @@ exports.createOrder = async (req, res, next) => {
         }))
       }
     });
+
+    // 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
+    // CSDL đã có hàng vừa thêm, nếu lỗi ở đây đã rollback CSDL 
+  
   } catch (err) {
     await transaction.rollback();
     console.error('Error in createOrder:', err);

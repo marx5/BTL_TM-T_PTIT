@@ -123,7 +123,7 @@ const UserDetail = () => {
                                         <div className="text-right">
                                             <p className="font-medium">Tổng tiền: {order.total.toLocaleString('vi-VN')}đ</p>
                                             <p className="text-sm text-gray-500">Phí vận chuyển: {order.shippingFee.toLocaleString('vi-VN')}đ</p>
-                                            <p className="text-sm text-gray-500">Phương thức: {order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'PayPal'}</p>
+                                            <p className="text-sm text-gray-500">Phương thức: {order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'momo'}</p>
                                             <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(order.status)}`}>
                                                 {formatStatus(order.status)}
                                             </span>
@@ -162,7 +162,7 @@ const UserDetail = () => {
                                             <h3 className="font-medium mb-2">Thông tin thanh toán</h3>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p className="text-sm">Phương thức: {order.Payment.method === 'cod' ? 'Thanh toán khi nhận hàng' : 'PayPal'}</p>
+                                                    <p className="text-sm">Phương thức: {order.Payment.method === 'cod' ? 'Thanh toán khi nhận hàng' : 'momo'}</p>
                                                     <p className="text-sm">Trạng thái: {order.Payment.status}</p>
                                                 </div>
                                                 <div>

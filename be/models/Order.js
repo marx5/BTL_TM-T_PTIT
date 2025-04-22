@@ -33,7 +33,7 @@ const Order = sequelize.define('Order', {
     defaultValue: 0,
   },
   paymentMethod: {
-    type: DataTypes.ENUM('paypal', 'cod'),
+    type: DataTypes.ENUM('momo', 'cod'),
     allowNull: false,
     defaultValue: 'cod',
   },

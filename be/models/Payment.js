@@ -31,7 +31,7 @@ const Payment = sequelize.define('Payment', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  // paypalTransactionId: {
+  // momoTransactionId: {
   //   type: DataTypes.STRING,
   //   allowNull: true,
   // },

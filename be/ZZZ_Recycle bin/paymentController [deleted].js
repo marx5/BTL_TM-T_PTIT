@@ -29,7 +29,7 @@ const createPaymentSchema = Joi.object({
     'number.integer': 'orderId phải là số nguyên',
     'any.required': 'orderId là bắt buộc'
   }),
-  paymentMethod: Joi.string().valid('paypal').required().messages({
+  paymentMethod: Joi.string().valid('momo').required().messages({
     'string.base': 'Phương thức thanh toán không hợp lệ',
     'any.only': 'Chỉ hỗ trợ thanh toán qua PayPal',
     'any.required': 'Phương thức thanh toán là bắt buộc'
@@ -128,7 +128,7 @@ exports.createPayment = async (req, res, next) => {
     const totalInUSD = (order.total * exchangeRate).toFixed(2);
     console.log('Converted amount:', { vnd: order.total, usd: totalInUSD, rate: exchangeRate });
 
-    // Prepare PayPal payment data
+    // Prepare momo payment data
     const baseUrl = getBaseUrl();
     const paymentData = {
       intent: 'sale',

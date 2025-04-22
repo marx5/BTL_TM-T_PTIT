@@ -92,7 +92,7 @@ const OrderConfirmation = () => {
                             <div>
                                 <h3 className="text-sm font-medium text-gray-500">Phương thức thanh toán</h3>
                                 <p className="mt-1 text-sm text-gray-900">
-                                    {order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'PayPal'}
+                                    {order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : 'momo'}
                                 </p>
                             </div>
                         </div>

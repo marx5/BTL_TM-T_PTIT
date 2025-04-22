@@ -7,7 +7,7 @@ const { auth } = require('../middleware/auth');
  * @swagger
  * /api/payments:
  *   post:
- *     summary: Tạo thanh toán cho đơn hàng bằng PayPal
+ *     summary: Tạo thanh toán cho đơn hàng bằng momo
  *     tags: [Thanh toán]
  *     security:
  *       - bearerAuth: []
@@ -23,14 +23,14 @@ const { auth } = require('../middleware/auth');
  *                 description: ID đơn hàng
  *               paymentMethod:
  *                 type: string
- *                 enum: [paypal]
+ *                 enum: [momo]
  *                 description: Phương thức thanh toán
  *             required:
  *               - orderId
  *               - paymentMethod
  *     responses:
  *       200:
- *         description: Thanh toán đã được tạo với URL phê duyệt PayPal
+ *         description: Thanh toán đã được tạo với URL phê duyệt momo
  *         content:
  *           application/json:
  *             schema:
@@ -60,19 +60,19 @@ router.post('/', auth, paymentController.createPayment);
  * @swagger
  * /api/payments/success:
  *   get:
- *     summary: Xử lý thanh toán PayPal thành công
+ *     summary: Xử lý thanh toán momo thành công
  *     tags: [Thanh toán]
  *     parameters:
  *       - name: paymentId
  *         in: query
  *         required: true
- *         description: ID thanh toán PayPal
+ *         description: ID thanh toán momo
  *         schema:
  *           type: string
  *       - name: PayerID
  *         in: query
  *         required: true
- *         description: ID người thanh toán PayPal
+ *         description: ID người thanh toán momo
  *         schema:
  *           type: string
  *     responses:
@@ -95,7 +95,7 @@ router.get('/success', paymentController.paymentSuccess);
  * @swagger
  * /api/payments/cancel:
  *   get:
- *     summary: Xử lý hủy thanh toán PayPal
+ *     summary: Xử lý hủy thanh toán momo
  *     tags: [Thanh toán]
  *     responses:
  *       200:

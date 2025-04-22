@@ -139,14 +139,23 @@ exports.createPayment= async(req, res, next) =>{
         var accessKey_Momo = "wd2ELg3mTHEVm1NU";
         var secretkey_Momo = "CtWZFmI4Hllt7BrjbVQLbFChqxwVbS8X";
         var requestId_Momo = partnerCode_Momo + new Date().getTime();
-        var orderId_Momo = requestId_Momo;
-        var orderInfo_Momo = "pay with MoMo : "+ requestId_Momo;
-        var redirectUrl_Momo = "http://localhost:3000";
+        // var orderId_Momo = requestId_Momo; // 🟥🟥🟥🟥🟥🟥🟥 sai ở đây
+        var orderId_Momo = order.id; // 🟥🟥🟥🟥🟥🟥🟥🟥 sửa lại
+        
+        
+        var date1= new Date() ;
+        var orderInfo_Momo = 
+            "pay with MoMo : "
+            + "\n"+ "🟧 ngay thang nam : "+ date1.getDate()+"/" + date1.getMonth()+ "/"+ date1.getFullYear()
+            + "\n"+ "🟧 gio phut giay : "+ date1.getHours() + ":"+ date1.getMinutes()+ ":"+ date1.getSeconds()
+            + "\n";
+        
+            var redirectUrl_Momo = "http://localhost:3000";
         
         var ipnUrl_Momo = "http://localhost:3456/api/payments/success";
         // var ipnUrl = redirectUrl = "https://webhook.site/454e7b77-f177-4ece-8236-ddf1c26ba7f8";
         
-        var amount_Momo = "50000";
+        var amount_Momo = order.total;
         var requestType_Momo = "captureWallet"
         var extraData_Momo = ""; //pass empty value if your merchant does not have stores
         
@@ -288,33 +297,38 @@ exports.createPayment= async(req, res, next) =>{
                 {transaction_1}
             )
 
-        const dbPayment= "";
+        const dbPayment= new Promise(
+            (resolve, reject)=>{
+                if(!paymentTimKiemDuoc){
+                    resolve( 
+                        Payment.create(
+                            {
+                                OrderId : orderId_Momo,
+                                paymentMethod : paymentMethod,
+                                amount : amount_Momo,
+                                status : 'pending',
+                                momoPaymentId : requestId_Momo
+                            },
+                            {transaction_1}
+                        )
+                    )
+                }else{
+                    dbPayment = await
+                        Payment.update(
+                            {
+                                OrderId : orderId_Momo,
+                                paymentMethod : paymentMethod,
+                                amount : amount_Momo,
+                                status : 'pending',
+                                momoPaymentId : requestId_Momo
+                            },
+                            {transaction_1}
+                        );
+                }
+            }
+        )
         
-        if(!paymentTimKiemDuoc){
-            dbPayment = await 
-                Payment.create(
-                    {
-                        OrderId : orderId_Momo,
-                        paymentMethod : paymentMethod,
-                        amount : amount_Momo,
-                        status : 'pending',
-                        momoPaymentId : requestId_Momo
-                    },
-                    {transaction_1}
-                );
-        }else{
-            dbPayment = await
-                Payment.update(
-                    {
-                        OrderId : orderId_Momo,
-                        paymentMethod : paymentMethod,
-                        amount : amount_Momo,
-                        status : 'pending',
-                        momoPaymentId : requestId_Momo
-                    },
-                    {transaction_1}
-                );
-        }
+
 
         console.log('Approval url : ', responseData.payUrl);
 
@@ -544,3 +558,7 @@ exports.getPayment = async (req, res, next)=> {
         next(err);
     }
 }
+
+// original: Error: Incorrect integer value: 'MOMOKXAQ202504101745313742105' for column 'OrderId' at row 1       
+// at Packet.asError (C:\Users\azoom\OneDrive\Tài liiệu\GitHub\BTL_TM-T_PTIT-2\bbe\node_modules\mysql2\lib\packets\packet.js:740:17)
+// 🟥🟥🟥🟥🟥🟥🟥 

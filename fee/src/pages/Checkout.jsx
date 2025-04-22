@@ -55,16 +55,17 @@ const Checkout = () => {
 
       console.log('Order created:', orderResponse);
 
-      // // Kiểm tra orderResponse có id không
-      // if (!orderResponse || !orderResponse.id) {
-      //   throw new Error('Không thể tạo đơn hàng. Vui lòng thử lại.');
-      // }
+      // Kiểm tra orderResponse có id không
+      if (!orderResponse.order || !orderResponse.order.id) {
+        throw new Error('Không thể tạo đơn hàng. Vui lòng thử lại.');
+      }
 
       if (paymentMethod === 'momo') {
         try {
-          // Create PayPal payment
+          // Create momo payment
           const paymentResponse = await createPayment({
-            orderId: orderResponse.id,
+            // orderId: orderResponse.id,
+            orderId: orderResponse.order.id, // 🟥🟥🟥🟥🟥🟥🟥🟥 thiếu '.order', kết quả trả về thì orderId bị chứa trong order; lỗi mới 🟥🟥🟥🟥🟥🟥🟥🟥 Unknown column 'momoPaymentId' in 'field list', nghi ngờ do chưa đổi tên cột
             paymentMethod: 'momo'
           }, token);
 
@@ -82,23 +83,23 @@ const Checkout = () => {
             }
           } catch (err) {
             console.error('Invalid momo URL:', err);
-            throw new Error('URL thanh toán PayPal không hợp lệ');
+            throw new Error('URL thanh toán momo không hợp lệ');
           }
 
-          // Redirect to PayPal
-          console.log('Redirecting to PayPal:', paymentResponse.approvalUrl);
+          // Redirect to momo
+          console.log('Redirecting to momo:', paymentResponse.approvalUrl);
           window.location.href = paymentResponse.approvalUrl;
           return;
         } catch (err) {
-          console.error('PayPal payment error:', err);
-          toast.error(err.message || 'Không thể tạo thanh toán PayPal. Vui lòng thử lại.');
+          console.error('momo payment error:', err);
+          toast.error(err.message || 'Không thể tạo thanh toán momo. Vui lòng thử lại.');
           return;
         }
       }
 
-    // For COD payment
-    toast.success('Đơn hàng đã được tạo thành công!');
-      navigate(`/checkout/${orderResponse.id}`);
+      // For COD payment
+      toast.success('Đơn hàng đã được tạo thành công!');
+        navigate(`/checkout/${orderResponse.id}`);
     } catch (err) {
       console.error('Order creation error:', err);
       toast.error(err.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
@@ -180,16 +181,16 @@ const Checkout = () => {
               <div className="flex items-center">
                 <input
                   type="radio"
-                  id="paypal"
+                  id="momo"
                   name="payment"
-                  value="paypal"
-                  checked={paymentMethod === 'paypal'}
+                  value="momo"
+                  checked={paymentMethod === 'momo'}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
                 />
-                <label htmlFor="paypal" className="ml-3">
-                  <span className="block text-sm font-medium text-gray-900">PayPal</span>
-                  <span className="block text-sm text-gray-500">Thanh toán qua PayPal</span>
+                <label htmlFor="momo" className="ml-3">
+                  <span className="block text-sm font-medium text-gray-900">momo</span>
+                  <span className="block text-sm text-gray-500">Thanh toán qua momo</span>
                 </label>
               </div>
             </div>
@@ -243,7 +244,7 @@ const Checkout = () => {
                 className="w-full mt-4"
                 disabled={isProcessing || !selectedAddress}
               >
-                {isProcessing ? 'Đang xử lý...' : paymentMethod === 'paypal' ? 'Thanh toán với PayPal' : 'Đặt hàng'}
+                {isProcessing ? 'Đang xử lý...' : paymentMethod === 'momo' ? 'Thanh toán với momo' : 'Đặt hàng'}
               </Button>
             </div>
           </div>

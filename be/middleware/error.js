@@ -40,11 +40,11 @@ const errorMessages = {
   // Payment errors
   currency_not_supported: 'Loại tiền tệ không được hỗ trợ.',
   failed_exchange_rate: 'Không thể lấy tỷ giá hối đoái.',
-  only_paypal_supported: 'Chỉ hỗ trợ thanh toán qua PayPal.',
+  only_momo_supported: 'Chỉ hỗ trợ thanh toán qua momo.',
   payment_not_found: 'Không tìm thấy thông tin thanh toán.',
   payment_failed: 'Thanh toán thất bại.',
-  paypal_error: 'Lỗi khi tạo thanh toán PayPal.',
-  paypal_execution_failed: 'Lỗi khi thực thi thanh toán PayPal.',
+  momo_error: 'Lỗi khi tạo thanh toán momo.',
+  momo_execution_failed: 'Lỗi khi thực thi thanh toán momo.',
   invalid_payment_amount: 'Số tiền thanh toán không khớp.',
 
   // Favorite errors
