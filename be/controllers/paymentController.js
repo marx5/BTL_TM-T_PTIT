@@ -437,17 +437,27 @@ exports.paymentSuccess = async (req, res, next)=> {
         // 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩
         const payment1 = await 
             Payment.findOne(
-                orderId_Momo, 
-                {transaction_1} 
+                {
+                    where: { 
+                        OrderId: orderId_Momo, 
+                        status: 'completed' 
+                    },
+                    transaction_1 
+                }
             );
         if(!payment1){
             throw new AppError('payment not found ', 404);
         }
         // 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩
         const order1 = await
-            Order.findByPk(
-                orderId_Momo,
-                { transaction_1 }
+            Order.findOne(
+                {
+                    where: { 
+                        OrderId: orderId_Momo, 
+                        status: 'completed' 
+                    },
+                    transaction_1
+                }
             );
         if(!order1){
             throw new AppError('order not found ', 404)
@@ -455,18 +465,28 @@ exports.paymentSuccess = async (req, res, next)=> {
         // 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩
 
         // 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
-        await payment1.update(
+        await Payment.update(
             {
                 staus: 'completed',
                 momoPaymentId : orderId_Momo
+            },
+            {
+                where : {
+                    OrderId: orderId_Momo,
+                }
             },
             {transaction_1}
         );
 
         // 🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥
 
-        await order1.update(
+        await Order.update(
             { status: 'completed'},
+            {
+                where : {
+                    OrderId: orderId_Momo,
+                }
+            },
             {transaction_1}
         );
 
