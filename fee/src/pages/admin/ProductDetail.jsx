@@ -45,7 +45,7 @@ const ProductDetail = () => {
                                 <img
                                     src={product.ProductImages[0].url.startsWith('http')
                                         ? product.ProductImages[0].url
-                                        : `${IMG_BASE_URL}${cleanImageUrl(product.ProductImages[0].url)}`}
+                                        : `${IMG_BASE_URL}uploads/${cleanImageUrl(product.ProductImages[0].url)}`}
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                 />

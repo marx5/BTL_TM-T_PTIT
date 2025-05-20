@@ -125,7 +125,7 @@ const ProductDetail = () => {
                             <img
                                 src={selectedImage.url.startsWith('http')
                                     ? selectedImage.url
-                                    : `${API_BASE_URL}/${cleanImageUrl(selectedImage.url)}`}
+                                    : `${API_BASE_URL}/uploads/${cleanImageUrl(selectedImage.url)}`}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                             />
@@ -151,7 +151,7 @@ const ProductDetail = () => {
                                     <img
                                         src={image.url.startsWith('http')
                                             ? image.url
-                                            : `${API_BASE_URL}/${cleanImageUrl(image.url)}`}
+                                            : `${API_BASE_URL}/uploads/${cleanImageUrl(image.url)}`}
                                         alt={product.name}
                                         className="w-full h-full object-cover"
                                     />
