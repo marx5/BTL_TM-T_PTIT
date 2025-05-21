@@ -6,7 +6,7 @@ import AdminLayout from '../../components/layout/AdminLayout';
 import Loader from '../../components/common/Loader';
 import { Link } from 'react-router-dom';
 
-const IMG_BASE_URL = process.env.REACT_APP_IMG_URL || 'http://localhost:3456';
+const IMG_BASE_URL = process.env.REACT_APP_IMG_URL || 'http://localhost:3456/';
 
 const cleanImageUrl = (url) => {
     return url.replace(/^\/+/, '').replace(/^Uploads\//, '');
@@ -45,7 +45,8 @@ const ProductDetail = () => {
                                 <img
                                     src={product.ProductImages[0].url.startsWith('http')
                                         ? product.ProductImages[0].url
-                                        : `${IMG_BASE_URL}uploads/${cleanImageUrl(product.ProductImages[0].url)}`}
+                                        : `${IMG_BASE_URL}${cleanImageUrl(product.ProductImages[0].url)}`}
+                                        // : `${IMG_BASE_URL}uploads/${cleanImageUrl(product.ProductImages[0].url)}`}
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                 />

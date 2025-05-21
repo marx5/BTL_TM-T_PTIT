@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 
 Modal.setAppElement('#root');
 
-const IMG_BASE_URL = process.env.REACT_APP_IMG_URL || 'http://localhost:3456';
+const IMG_BASE_URL = process.env.REACT_APP_IMG_URL || 'http://localhost:3456/';
 
 const cleanImageUrl = (url) => {
     return url.replace(/^\/+/, '').replace(/^Uploads\//, '');
@@ -26,7 +26,8 @@ const getProductImage = (product) => {
             const cleanUrl = cleanImageUrl(mainImage.url);
             return mainImage.url.startsWith('http')
                 ? mainImage.url
-                : `${IMG_BASE_URL}uploads/${cleanUrl}`;
+                : `${IMG_BASE_URL}${cleanUrl}`;
+                // : `${IMG_BASE_URL}uploads/${cleanUrl}`;
         }
     }
 
@@ -35,7 +36,9 @@ const getProductImage = (product) => {
         const cleanUrl = cleanImageUrl(product.image);
         return product.image.startsWith('http')
             ? product.image
-            : `${IMG_BASE_URL}uploads/${cleanUrl}`;
+            : `${IMG_BASE_URL}${cleanUrl}`;
+            // : `${IMG_BASE_URL}uploads/${cleanUrl}`;
+
     }
 
     return null;
@@ -452,7 +455,8 @@ const Products = () => {
                                             {productImages.map((image) => (
                                                 <div key={image.id} className="relative group">
                                                     <img
-                                                        src={image.url.startsWith('http') ? image.url : `${IMG_BASE_URL}uploads/${cleanImageUrl(image.url)}`}
+                                                        src={image.url.startsWith('http') ? image.url : `${IMG_BASE_URL}${cleanImageUrl(image.url)}`}
+                                                        // src={image.url.startsWith('http') ? image.url : `${IMG_BASE_URL}uploads/${cleanImageUrl(image.url)}`}
                                                         alt="Product"
                                                         className={`w-full h-24 object-cover rounded ${image.isMain ? 'ring-2 ring-blue-500' : ''}`}
                                                     />

@@ -5,7 +5,7 @@ import { addToFavorites, removeFromFavorites, getFavorites } from '../../service
 import Button from '../common/Button';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = 'http://localhost:3456';
+const API_BASE_URL = 'http://localhost:3456/';
 
 const ProductCard = ({ product }) => {
   const { token, user } = useAuth();
@@ -65,7 +65,8 @@ const ProductCard = ({ product }) => {
         const cleanUrl = mainImage.url.replace(/^\/+/, '').replace(/^Uploads\//, '');
         return mainImage.url.startsWith('http')
           ? mainImage.url
-          : `${API_BASE_URL}/uploads/${cleanUrl}`;
+          : `${API_BASE_URL}${cleanUrl}`;
+          // : `${API_BASE_URL}/uploads/${cleanUrl}`;
       }
     }
 
@@ -75,7 +76,8 @@ const ProductCard = ({ product }) => {
       const cleanUrl = product.image.replace(/^\/+/, '').replace(/^Uploads\//, '');
       return product.image.startsWith('http')
         ? product.image
-        : `${API_BASE_URL}/uploads/${cleanUrl}`;
+        : `${API_BASE_URL}${cleanUrl}`;
+        // : `${API_BASE_URL}/uploads/${cleanUrl}`;
     }
 
     return null;
