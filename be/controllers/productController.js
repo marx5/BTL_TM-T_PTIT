@@ -122,7 +122,8 @@ exports.createProduct = async (req, res, next) => {
       for (const file of req.files) {
         await ProductImage.create({
           ProductId: product.id,
-          url: `/uploads/${file.filename}`,
+          // url: `/uploads/${file.filename}`,
+          url: `${file.filename}`,
           isMain: false,
         });
       }
